@@ -13,7 +13,7 @@ $records = [];
 
 function getAttendeeType($firstName, $lastName, $ticketType, $discountCode)
 {
-    if ($discountCode === 'longhorn-organizers-2018') {
+    if (stripos($ticketType, 'organizer') !== false) {
         return "Organizer";
     }
 
