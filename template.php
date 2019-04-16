@@ -69,8 +69,8 @@ $page = array_map(function($record) use ($qrWriter) {
     $record['qr'] = 'data:image/png;base64,' . base64_encode($qrWriter->writeString(implode("\n", [
             "BEGIN:VCARD",
             "VERSION:3.0",
-            "N:" . $record['lastName'] . ':' . $record['firstName'],
-            "FN:" . $record['firstName'] . ' ' . $record['lastName'],
+            "N:" . iconv('utf8', 'ascii//TRANSLIT', str_replace('ń', 'n', $record['lastName'])) . ';' .
+                iconv('utf8', 'ascii//TRANSLIT', str_replace('ń', 'n', $record['firstName'])) . ';',
             "ORG:" . $record['company'],
             "EMAIL:" . $record['email'],
             "END:VCARD"
@@ -142,7 +142,7 @@ $page = array_map(function($record) use ($qrWriter) {
             <?= in_array($entry['lastName'], ['Schwanekamp']) ? 'style="font-size: 13.5pt"' : '' ?>>
             <?= $entry['lastName'] ?>
         </div>
-        <div class="attendee-type"><?= $entry['attendeeType'] ?></div>
+        <div class="attendee-type"><!-- <?= $entry['attendeeType'] ?>--></div>
         <div class="company"><?= $entry['company'] ?></div>
     </div>
 <?php endforeach; ?>
