@@ -62,7 +62,6 @@ foreach (file('attendees-remaining.csv') as $line) {
 
     // double-add for both sides of the badge
     $records[] = $record;
-    $records[] = $record;
 }
 
 $page = array_map(function($record) use ($qrWriter) {
