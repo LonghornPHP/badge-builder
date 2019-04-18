@@ -38,11 +38,11 @@ function getAttendeeType($firstName, $lastName, $ticketType, $discountCode)
 
 function getFirstNameStyle($firstName) // adjust styles for long names to fit
 {
-    if (in_array($firstName, ['Samantha', 'Stephanie', 'Matthew'])) {
+    if (in_array($firstName, ['Samantha', 'Lawrence', 'Stephanie', 'Benjamin', 'Margaret'])) {
         return 'style="font-size: 19.5pt"';
     }
 
-    if (in_array($firstName, ['Catherine', 'Lawrence', 'Anderson', 'Alejandro'])) {
+    if (in_array($firstName, ['Catherine', 'Anderson', 'Alejandro', 'Matthew'])) {
         return 'style="font-size: 20.5pt"';
     }
 
@@ -52,6 +52,11 @@ function getFirstNameStyle($firstName) // adjust styles for long names to fit
 // pull records from Ti.to CSV
 foreach (file('attendees-remaining.csv') as $line) {
     $line = str_getcsv($line);
+
+    if (!$line[5]) {
+        continue; // skip tickets that are currently unclaimed
+    }
+
     $record = [
         'firstName' => $firstName = ucwords($line[5]),
         'lastName' => $lastName = ucwords($line[6]),
@@ -77,7 +82,7 @@ $page = array_map(function($record) use ($qrWriter) {
     $record['id'] = str_replace(' ', '-', strtolower(iconv('utf8', 'ascii//TRANSLIT', str_replace('ń', 'n', $record['firstName'])))) . '-' .
                 str_replace(' ', '-', strtolower(iconv('utf8', 'ascii//TRANSLIT', str_replace('ń', 'n', $record['lastName']))));
     return $record;
-}, array_slice($records, ($_GET['page'] ?? 0) * 15, 15));
+}, array_slice($records, ($_GET['page'] ?? 0) * ($_GET['limit'] ?? 15), ($_GET['limit'] ?? 15)));
 
 ?>
 
@@ -100,7 +105,7 @@ $page = array_map(function($record) use ($qrWriter) {
             margin-right: .125in; /* the gutter */
 
             float: left;
-
+            position: relative; /* we need this to position company properly */
             overflow: hidden;
 
             /* outline: 1px dotted; */ /* outline doesn't occupy space like border does */
@@ -113,13 +118,16 @@ $page = array_map(function($record) use ($qrWriter) {
             font-size: 14pt;
         }
         .label .attendee-type {
-            padding-top: 0.25in;
-            height: 0.6in;
+            padding-top: 0 /* was 0.25in */;
+            height: 0 /* was 0.6in */;
             font-size: 16pt;
             font-variant: small-caps;
         }
         .label .company {
             font-size: 14pt;
+            padding-top: 0.45in;
+            position: absolute;
+            bottom: 0.05in;
         }
         .label img.qr-code {
             float: right;
