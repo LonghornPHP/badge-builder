@@ -38,7 +38,7 @@ function getAttendeeType($firstName, $lastName, $ticketType, $discountCode)
 
 function getFirstNameStyle($firstName) // adjust styles for long names to fit
 {
-    if (in_array($firstName, ['Samantha', 'Stephanie'])) {
+    if (in_array($firstName, ['Samantha', 'Stephanie', 'Matthew'])) {
         return 'style="font-size: 19.5pt"';
     }
 
@@ -74,6 +74,8 @@ $page = array_map(function($record) use ($qrWriter) {
             "EMAIL:" . $record['email'],
             "END:VCARD"
         ])));
+    $record['id'] = str_replace(' ', '-', strtolower(iconv('utf8', 'ascii//TRANSLIT', str_replace('ń', 'n', $record['firstName'])))) . '-' .
+                str_replace(' ', '-', strtolower(iconv('utf8', 'ascii//TRANSLIT', str_replace('ń', 'n', $record['lastName']))));
     return $record;
 }, array_slice($records, ($_GET['page'] ?? 0) * 15, 15));
 
@@ -89,7 +91,7 @@ $page = array_map(function($record) use ($qrWriter) {
         body {
             width: 8.5in;
             margin: .5in .0625in .5in .1875in;
-            font-family: Helvetica, sans-serif;
+            font-family: "Open Sans", sans-serif;
         }
         .label {
             width: 2.5in; /* plus .125 inches from padding */
@@ -134,7 +136,7 @@ $page = array_map(function($record) use ($qrWriter) {
 <body>
 
 <?php foreach ($page as $entry): ?>
-    <div class="label">
+    <div class="label" id="<?= $entry['id'] ?>">
         <img class="qr-code" src="<?= $entry['qr'] ?>" />
         <div class="first-name" <?= getFirstNameStyle($entry['firstName']) ?>><?= $entry['firstName'] ?></div>
         <div class="last-name"
