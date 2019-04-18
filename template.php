@@ -53,7 +53,7 @@ function getFirstNameStyle($firstName) // adjust styles for long names to fit
 foreach (file('attendees-remaining.csv') as $line) {
     $line = str_getcsv($line);
 
-    if (!$line[5]) {
+    if (!$line[5] || $line[5] === 'Ticket First Name') {
         continue; // skip tickets that are currently unclaimed
     }
 
@@ -142,6 +142,20 @@ $page = array_map(function($record) use ($qrWriter) {
     </style>
 </head>
 <body>
+<?php if ($_GET['screenshot'] ?? false): ?>
+<p>To get PNGs of badge stickers on this page:</p>
+<ol>
+    <li>Open this page in Firefox</li>
+    <li>Open the JS console</li>
+    <li>Paste each list item on its own into the console (hit Enter after each)</li>
+</ol>
+<p><strong>Tip:</strong> Triple-click line, Cmd-C, Cmd-~, Cmd-V, Enter</p>
+<hr />
+<ol>
+    <?php foreach ($page as $entry): ?>
+        <li>:screenshot <?= $entry['id']?>.png --selector #<?= $entry['id'] ?></li>
+    <?php endforeach; ?>
+</ol><hr /><?php endif; ?>
 
 <?php foreach ($page as $entry): ?>
     <div class="label" id="<?= $entry['id'] ?>">
