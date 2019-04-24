@@ -153,7 +153,7 @@ $page = array_map(function($record) use ($qrWriter) {
 <hr />
 <ol>
     <?php foreach ($page as $entry): ?>
-        <li>:screenshot <?= $entry['id']?>.png --dpr 4.167 --selector #<?= $entry['id'] ?></li>
+        <li>:screenshot <?= $entry['id']?>.png --dpr 3.125 --selector #<?= $entry['id'] ?></li>
     <?php endforeach; ?>
 </ol><hr /><?php endif; ?>
 
