@@ -25,21 +25,17 @@ function getAttendeeType($firstName, $lastName, $ticketType, $discountCode)
         return "Speaker";
     }
 
-    if (stripos($ticketType, '+') !== false) {
-        return "3-Day";
-    }
-
-    if (stripos($ticketType, 'tutorials') !== false) {
-        return "Tutorials Only";
-    }
-
-    return "GA";
+    return "Attendee";
 }
 
 function getFirstNameStyle($firstName) // adjust styles for long names to fit
 {
     if (in_array($firstName, ['Samantha', 'Lawrence', 'Stephanie', 'Benjamin', 'Margaret'])) {
         return 'style="font-size: 19.5pt"';
+    }
+
+    if ($firstName === 'Christopher') {
+        return 'style="font-size: 16pt"';
     }
 
     if (in_array($firstName, ['Catherine', 'Anderson', 'Alejandro', 'Matthew'])) {
@@ -142,6 +138,20 @@ $page = array_map(function($record) use ($qrWriter) {
     </style>
 </head>
 <body>
+<?php if ($_GET['lists'] ?? false): ?><ol><?php
+
+$byType = [];
+foreach ($page as $attendee) {
+    $byType[$attendee['attendeeType']][] = $attendee;
+}
+
+foreach ($byType as $type => $attendees): ?>
+<li><?= $type ?><ol>
+<?php foreach ($attendees as $attendee): ?>
+<li><?= $attendee['id'] ?>.png</li>
+<?php endforeach; ?></ol></li>
+<?php endforeach; ?></ol><?php endif; ?>
+
 <?php if ($_GET['screenshot'] ?? false): ?>
 <p>To get PNGs of badge stickers on this page:</p>
 <ol>
@@ -162,7 +172,7 @@ $page = array_map(function($record) use ($qrWriter) {
         <img class="qr-code" src="<?= $entry['qr'] ?>" />
         <div class="first-name" <?= getFirstNameStyle($entry['firstName']) ?>><?= $entry['firstName'] ?></div>
         <div class="last-name"
-            <?= in_array($entry['lastName'], ['Schwanekamp']) ? 'style="font-size: 13.5pt"' : '' ?>>
+            <?= in_array($entry['lastName'], ['Schwanekamp', 'Schreckengost']) ? 'style="font-size: 13pt"' : '' ?>>
             <?= $entry['lastName'] ?>
         </div>
         <div class="attendee-type"><!-- <?= $entry['attendeeType'] ?>--></div>
