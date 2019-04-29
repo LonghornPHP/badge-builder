@@ -34,6 +34,10 @@ function getFirstNameStyle($firstName) // adjust styles for long names to fit
         return 'style="font-size: 19.5pt"';
     }
 
+    if ($firstName === 'Oleksandr') {
+        return 'style="font-size: 18.5pt"';
+    }
+
     if ($firstName === 'Christopher') {
         return 'style="font-size: 16pt"';
     }
@@ -58,11 +62,19 @@ foreach (file('attendees-remaining.csv') as $line) {
         'lastName' => $lastName = ucwords($line[6]),
         'email' => $line[7],
         'company' => $line[8],
-        'attendeeType' => getAttendeeType($firstName, $lastName, $line[3], $line[23])
+        'attendeeType' => getAttendeeType($firstName, $lastName, $line[3], $line[23]),
+        'isTutorial' => stripos($line[3], 'tutorial') !== false
     ];
 
-    // double-add for both sides of the badge
     $records[] = $record;
+}
+
+if (($_GET['sort'] ?? '') === 'tutorial') {
+    usort($records, function($a, $b) {
+        return $b['isTutorial'] <=> $a['isTutorial'] ?:
+            strcasecmp($a['lastName'], $b['lastName']) ?:
+            strcasecmp($a['firstName'], $b['firstName']);
+    });
 }
 
 $page = array_map(function($record) use ($qrWriter) {
@@ -148,7 +160,7 @@ foreach ($page as $attendee) {
 foreach ($byType as $type => $attendees): ?>
 <li><?= $type ?><ol>
 <?php foreach ($attendees as $attendee): ?>
-<li><?= $attendee['id'] ?>.png</li>
+<li><?= $attendee['isTutorial'] ? '<b>' : '' ?><?= $attendee['id'] ?>.png<?= $attendee['isTutorial'] ? '</b>' : ''  ?></li>
 <?php endforeach; ?></ol></li>
 <?php endforeach; ?></ol><?php endif; ?>
 
