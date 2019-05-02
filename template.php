@@ -103,7 +103,7 @@ $page = array_map(function($record) use ($qrWriter) {
     <style>
         body {
             width: 8.5in;
-            margin: .5in .0625in .5in .1875in;
+            margin: .5in .0625in .5in .25in;
             font-family: "Open Sans", sans-serif;
         }
         .label {
