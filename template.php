@@ -13,6 +13,10 @@ $records = [];
 
 function getAttendeeType($firstName, $lastName, $ticketType, $discountCode)
 {
+    if (stripos($ticketType, 'virtual') !== false) {
+        return 'Virtual';
+    }
+
     if (stripos($ticketType, 'organizer') !== false) {
         return "Organizer";
     }
@@ -25,12 +29,17 @@ function getAttendeeType($firstName, $lastName, $ticketType, $discountCode)
         return "Speaker";
     }
 
+    if (stripos($ticketType, 'sponsor') !== false && stripos($ticketType, 'giveaway') === false) {
+        return "Sponsor";
+    }
+
+
     return "Attendee";
 }
 
 function getFirstNameStyle($firstName) // adjust styles for long names to fit
 {
-    if (in_array($firstName, ['Samantha', 'Lawrence', 'Stephanie', 'Benjamin', 'Margaret'])) {
+    if (in_array($firstName, ['Catherine', 'Samantha', 'Lawrence', 'Stephanie', 'Benjamin', 'Margaret', 'Vincent J.'])) {
         return 'style="font-size: 19.5pt"';
     }
 
@@ -38,11 +47,15 @@ function getFirstNameStyle($firstName) // adjust styles for long names to fit
         return 'style="font-size: 18.5pt"';
     }
 
-    if ($firstName === 'Christopher') {
+    if (in_array($firstName, ['Christopher'])) {
         return 'style="font-size: 16pt"';
     }
 
-    if (in_array($firstName, ['Catherine', 'Anderson', 'Alejandro', 'Matthew'])) {
+    if (in_array($firstName, ['Nabilahmed'])) {
+        return 'style="font-size: 15.5pt"';
+    }
+
+    if (in_array($firstName, ['Anderson', 'Alejandro', 'Matthew'])) {
         return 'style="font-size: 20.5pt"';
     }
 
@@ -66,6 +79,10 @@ foreach (file('attendees-remaining.csv') as $line) {
         'isTutorial' => stripos($line[3], 'tutorial') !== false
     ];
 
+    if ($record['attendeeType'] === 'Virtual') {
+        continue; // skip virtual attendees
+    }
+
     $records[] = $record;
 }
 
@@ -77,6 +94,8 @@ if (($_GET['sort'] ?? '') === 'tutorial') {
     });
 }
 
+$limit = isset($_GET['screenshot']) ? 999 : ($_GET['limit'] ?? 15);
+
 $page = array_map(function($record) use ($qrWriter) {
     $record['qr'] = 'data:image/png;base64,' . base64_encode($qrWriter->writeString(implode("\n", [
             "BEGIN:VCARD",
@@ -87,10 +106,11 @@ $page = array_map(function($record) use ($qrWriter) {
             "EMAIL:" . $record['email'],
             "END:VCARD"
         ])));
-    $record['id'] = str_replace(' ', '-', strtolower(iconv('utf8', 'ascii//TRANSLIT', str_replace('ń', 'n', $record['firstName'])))) . '-' .
-                str_replace(' ', '-', strtolower(iconv('utf8', 'ascii//TRANSLIT', str_replace('ń', 'n', $record['lastName']))));
+    $record['id'] = str_replace([' ', '.'], ['-', ''], strtolower(iconv('utf8', 'ascii//TRANSLIT', str_replace('ń', 'n', $record['firstName'])))) . '-' .
+                str_replace([' ', "'"], ['-', ''], strtolower(iconv('utf8', 'ascii//TRANSLIT', str_replace('ń', 'n', $record['lastName']))));
+
     return $record;
-}, array_slice($records, ($_GET['page'] ?? 0) * ($_GET['limit'] ?? 15), ($_GET['limit'] ?? 15)));
+}, array_slice($records, ($_GET['page'] ?? 0) * $limit, $limit));
 
 ?>
 
@@ -175,19 +195,18 @@ foreach ($byType as $type => $attendees): ?>
 <hr />
 <ol>
     <?php foreach ($page as $entry): ?>
-        <li>:screenshot <?= $entry['id']?>.png --dpr 3.125 --selector #<?= $entry['id'] ?></li>
+        <li>:screenshot <?= strtolower($entry['attendeeType']) ?>/<?= $entry['id'] ?>.png --dpr 3.125 --selector #<?= $entry['id'] ?></li>
     <?php endforeach; ?>
 </ol><hr /><?php endif; ?>
 
 <?php foreach ($page as $entry): ?>
-    <div class="label" id="<?= $entry['id'] ?>">
+    <div class="label <?= $entry['attendeeType'] ?>" id="<?= $entry['id'] ?>">
         <img class="qr-code" src="<?= $entry['qr'] ?>" />
         <div class="first-name" <?= getFirstNameStyle($entry['firstName']) ?>><?= $entry['firstName'] ?></div>
         <div class="last-name"
             <?= in_array($entry['lastName'], ['Schwanekamp', 'Schreckengost']) ? 'style="font-size: 13pt"' : '' ?>>
             <?= $entry['lastName'] ?>
         </div>
-        <div class="attendee-type"><!-- <?= $entry['attendeeType'] ?>--></div>
         <div class="company"><?= $entry['company'] ?></div>
     </div>
 <?php endforeach; ?>
