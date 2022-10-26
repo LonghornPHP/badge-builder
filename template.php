@@ -1,13 +1,6 @@
-<?php // composer.json: {"require": {"bacon/bacon-qr-code": "^1.0.3"}}
-// Adapted from https://boulderinformationservices.wordpress.com/2011/08/25/print-avery-labels-using-css-and-html/
-// Print at 100% in Chrome with no margins to get a match. Make sure to use the Letter paper size!
+<?php
 
 require __DIR__ . '/vendor/autoload.php';
-
-$renderer = new \BaconQrCode\Renderer\Image\Png();
-$renderer->setHeight(256);
-$renderer->setWidth(256);
-$qrWriter = new \BaconQrCode\Writer($renderer);
 
 $records = [];
 
@@ -29,10 +22,9 @@ function getAttendeeType($firstName, $lastName, $ticketType, $discountCode)
         return "Speaker";
     }
 
-    if (stripos($ticketType, 'sponsor') !== false && stripos($ticketType, 'giveaway') === false) {
+    if (stripos($ticketType, 'sponsor') !== false && stripos($discountCode, 'giveaway') === false) {
         return "Sponsor";
     }
-
 
     return "Attendee";
 }
@@ -76,7 +68,8 @@ foreach (file('attendees-remaining.csv') as $line) {
         'email' => $line[7],
         'company' => $line[8],
         'attendeeType' => getAttendeeType($firstName, $lastName, $line[3], $line[23]),
-        'isTutorial' => stripos($line[3], 'tutorial') !== false
+        'isTutorial' => stripos($line[3], 'tutorial') !== false,
+        'ticketId' => $line[14] // ticket reference
     ];
 
     if ($record['attendeeType'] === 'Virtual') {
@@ -96,16 +89,7 @@ if (($_GET['sort'] ?? '') === 'tutorial') {
 
 $limit = isset($_GET['screenshot']) ? 999 : ($_GET['limit'] ?? 15);
 
-$page = array_map(function($record) use ($qrWriter) {
-    $record['qr'] = 'data:image/png;base64,' . base64_encode($qrWriter->writeString(implode("\n", [
-            "BEGIN:VCARD",
-            "VERSION:3.0",
-            "N:" . iconv('utf8', 'ascii//TRANSLIT', str_replace('ń', 'n', $record['lastName'])) . ';' .
-                iconv('utf8', 'ascii//TRANSLIT', str_replace('ń', 'n', $record['firstName'])) . ';',
-            "ORG:" . $record['company'],
-            "EMAIL:" . $record['email'],
-            "END:VCARD"
-        ])));
+$page = array_map(function($record) {
     $record['id'] = str_replace([' ', '.'], ['-', ''], strtolower(iconv('utf8', 'ascii//TRANSLIT', str_replace('ń', 'n', $record['firstName'])))) . '-' .
                 str_replace([' ', "'"], ['-', ''], strtolower(iconv('utf8', 'ascii//TRANSLIT', str_replace('ń', 'n', $record['lastName']))));
 
@@ -122,13 +106,13 @@ $page = array_map(function($record) use ($qrWriter) {
     <!-- <title>6793 Labels (2.625 x 2 inches)</title> -->
     <style>
         body {
-            width: 8.5in;
+            width: 9.5in;
             margin: .5in .0625in .5in .25in;
             font-family: "Open Sans", sans-serif;
         }
         .label {
-            width: 2.5in; /* plus .125 inches from padding */
-            height: 2in; /* plus .125 inches from padding */
+            width: 2.875in; /* plus .125 inches from padding */
+            height: 1.375in; /* plus .125 inches from padding */
             padding: 0 0 0 .1in;
             margin-right: .125in; /* the gutter */
 
@@ -200,8 +184,7 @@ foreach ($byType as $type => $attendees): ?>
 </ol><hr /><?php endif; ?>
 
 <?php foreach ($page as $entry): ?>
-    <div class="label <?= $entry['attendeeType'] ?>" id="<?= $entry['id'] ?>">
-        <img class="qr-code" src="<?= $entry['qr'] ?>" />
+    <div class="label <?= $entry['attendeeType'] ?>" data-attendee-type="<?= $entry['attendeeType'] ?>" id="<?= $entry['id'] ?>">
         <div class="first-name" <?= getFirstNameStyle($entry['firstName']) ?>><?= $entry['firstName'] ?></div>
         <div class="last-name"
             <?= in_array($entry['lastName'], ['Schwanekamp', 'Schreckengost']) ? 'style="font-size: 13pt"' : '' ?>>
@@ -210,6 +193,8 @@ foreach ($byType as $type => $attendees): ?>
         <div class="company"><?= $entry['company'] ?></div>
     </div>
 <?php endforeach; ?>
+
+<p id="end-of-page"></p>
 
 <!-- <div class="page-break"></div> -->
 
