@@ -1,7 +1,5 @@
 <?php
 
-require __DIR__ . '/vendor/autoload.php';
-
 $records = [];
 
 function getAttendeeType($firstName, $lastName, $ticketType, $discountCode)
